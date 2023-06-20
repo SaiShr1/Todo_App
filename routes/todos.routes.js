@@ -7,8 +7,9 @@ const { isAuthenticated } = require("../middlewares");
 const todoRouter = express.Router();
 
 todoRouter.get("/", (req, res) => {
-  return utils.readData().then((data) => {
-    return res.status(200).json
+  return utils.readData()
+    .then((data) => {
+     return res.status(200).json
     ({
       message: "All todos fetched.",
       data,
@@ -61,19 +62,20 @@ todoRouter.post(
 
     return utils
       .readData()
-      .then((data) => {
-        data.push(newTodo);
-        return fs.writeFile("db.json", JSON.stringify(data));
-      })
-      .then(() => {
-        return res.status(201).json
-        ({
-          message: "Todo created successfully.",
-          data: newTodo,
-          error: null,
-        });
-      })
-      .catch((error) => {
+        .then((data) => {
+          data.push(newTodo);
+            return fs.writeFile("db.json", JSON.stringify(data));
+          })
+        .then(() => {
+          return res.status(201).json
+            ({
+              message: "Todo created successfully.",
+              data: newTodo,
+              error: null,
+            });
+          })
+      
+          .catch((error) => {
         return res.status(400).json
         ({
           message: "Todo creation failed.",
@@ -81,18 +83,20 @@ todoRouter.post(
           error: error.message ? error.message : error.toString(),
         });
       });
-  }
-);
+  });
+
 
 todoRouter.get("/:title", (req, res) => {
   const title = req.params.title.toLowerCase();
 
-  return utils.readData().then((dataArr) => {
-    const todoObj = dataArr.find((todo) => {
-      return todo.title === title;
-    });
+  return utils.readData()
+    .then((dataArr) => {
+      
+      const todoObj = dataArr.find((todo) => {
+        return todo.title === title;
+      });
 
-    return res.status(200).json
+  return res.status(200).json
     ({
       message: "Todo fetched successfully.",
       data: todoObj,
@@ -107,10 +111,12 @@ todoRouter.put("/:title", (req, res) => {
 
   return utils
     .readData()
-    .then((dataArr) => {
-      const idx = dataArr.findIndex((todo) => {
-        return todo.title === title;
-      });
+      .then((dataArr) => {
+        const idx = dataArr.findIndex((todo) => {
+          return todo.title.toLowerCase === title;
+        });
+
+        console.log("idx", idx);
 
       if (idx != -1)
       {
@@ -138,10 +144,10 @@ todoRouter.delete("/:title", (req, res) => {
 
   return utils
     .readData()
-    .then((dataArr) => {
-      const idx = dataArr.findIndex((todo) => {
-        return todo.title === title;
-      });
+      .then((dataArr) => {
+        const idx = dataArr.findIndex((todo) => {
+          return todo.title === title;
+        });
 
       if (idx != -1)
       {
@@ -151,11 +157,11 @@ todoRouter.delete("/:title", (req, res) => {
     })
     .then(() => {
       return res.status(200).json
-      ({
-        message: "Todo deleted successfully.",
-        data: deletedObj,
-        error: null,
-      });
+        ({
+          message: "Todo deleted successfully.",
+          data: deletedObj,
+          error: null,
+        });
     });
 });
 

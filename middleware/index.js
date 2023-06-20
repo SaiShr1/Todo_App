@@ -9,9 +9,7 @@ function logger(req, res, next)
 
 // Here we are checking if the user is authenticated or not
 function isAuthenticated(req, res, next)
-
 {
-
     // If the user is not authenticated then we are redirecting the user to login page
 if(!req.headers.authorization || req.headers.authorization === "null"  ) {
     return res.status(200)

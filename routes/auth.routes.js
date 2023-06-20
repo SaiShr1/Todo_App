@@ -1,97 +1,112 @@
-const { name } = require('ejs')
-const e = require('express')
-const express = require('express')
-const router = express.Router()
+const express = require("express");
+const { body, validationResult } = require("express-validator");
+const JWT = require("jsonwebtoken");
+const { SECRET } = require("../config");
+const router = express.Router();
 
-const USER = []
+const USER = [];
 
-router.post("/register",
-    body("name")
-        .custom((name) => {
-            if (typeof name === "string" && name.length >= 5) {
-                return true
-            }
-            else false
-        })
-        .withMessage("Name shoulde be of minimum 5 characters."),
+// /auth/register -> POST
+router.post(
+  "/register",
+  body("name")
+        // here we are using custom validator to check if name is string and length is greater than 5
+    .custom((name) => {
+      if (typeof name === "string" && name.length >= 5) {
+        return true;
+      }
+      return false;
+    })
 
-    body("email")
-        .isEmail()
-        .withMessage("Please enter a valid email address."),
+    // here we are using withMessage to send custom message if validation fails
+    .withMessage("Name should be of minimum 5 characters."),
+  body("email").isEmail().withMessage("Enter email in proper format."),
+  body("password")
 
-    body("password")
-        .isLength({ min: 8 })
-        .withMessage("Password should be of minimum 8 characters."),
+    // here we are using custom validator to check if password is string and length is greater than 8
+    .custom((password) => {
+      if (typeof password === "string" && password.length >= 8) {
+        return true;
+      }
+      return false;
+    })
 
+    // here we are using withMessage to send custom message if validation fails
+    .withMessage("Password should be of minimum 8 characters."),
+  
+    // here we are checking email
     (req, res) => {
+    const { name, email, password } = req.body;
 
-        const { name, email, password } = req.body
+    const errors = validationResult(req);
 
-        console.log("---user info---", name, email, password)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        message: "User registeration failed.",
+        error: errors.array(),
+        data: {},
+      });
+    }
 
-        USER.push(
-            {
-                name,
-                email,
-                password,
-            })
+    USER.push({
+      name,
+      email,
+      password,
+    });
 
-        return res.status(201).json({
-            message: "User Registered in successfully.",
-            error: null,
-            data: {}
-        })
-    })
+    return res.status(201).json({
+      message: "User registeration successful.",
+      error: null,
+      data: {},
+    });
+  }
+);
 
-    router.post("/loginn", (req, res) =>{
-        const { email, password } = req.body
+// /auth/login -> POST
+router.post("/login", (req, res) => {
+  const { email, password } = req.body;
 
-        console.log("---user info---", email, password);
+  console.log("---user info ---", email, password);
 
-        if (USER.length <=0){
-            return res.status(400)
-            .json({
-                message: "User login failed.",
-                error:"User does not exists.",
-                data: {}
-            })
-        }
 
-            // this is not a very good approach due to nesting of lots of if conditions
-    // else if (USER.find(user => user.email === email){
-    //     if(password)
-    // })
+  if (USER.length <= 0) {
+    return res.status(400).json({
+      message: "User login failed.",
+      error: "User does not exists.",
+      data: {},
+    });
+  }
 
-        const userIndex = USER.findIndex((user) => user.email === email)
-        if(userIndex === -1){
-            return res.status(400)
-            .json({
-                message: "User login failed.",
-                error:"User does not exists.",
-                data: {}
-            })
-        }
+  const userIndex = USER.findIndex((user) => user.email === email);
 
-        if(USER[userIndex].password !== password){
-            return res.status(400)
-            .json({
-                message: "User login failed.",
-                error:"Password is incorrect.",
-                data: {}
-            })
-        }
+  if (userIndex === -1) {
+    return res.status(404).json({
+      message: "User login failed.",
+      error: "User not found.",
+      data: {},
+    });
+  }
 
-        // create access tokens
-        // create refresh tokens
+  if (USER[userIndex].password !== password) {
+    return res.status(404).json({
+      message: "User login failed.",
+      error: "Invalid password.",
+      data: {},
+    });
+  }
 
-        const token = JWT.sign({ email }, SECRET)
+  // create access tokens
+  // response to clientjwt npm
 
-        return res.status(200)
-        .json({
-            message: "User login successfully.",
-            error:null,
-            data: {
-                token,
-            }
-        })
-    })
+  const token = JWT.sign({ email }, SECRET);
+
+  return res.status(200).json({
+    message: "User login successful.",
+    error: null,
+    data: {
+      access_token: token,
+    },
+  });
+});
+
+module.exports = router;
